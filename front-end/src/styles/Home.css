@@ -1,0 +1,132 @@
+.menu-toggle {
+    font-size: 1.5rem;
+    background: none;
+    border: none;
+    color: #1f4e8c;
+    cursor: pointer;
+    padding: 0.5rem;
+    position: fixed;
+    top: 1rem;
+    right: 1rem;
+    z-index: 1001;
+}
+
+.user-info {
+    font-size: 1rem;
+    color: #1a2a4a;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    position: fixed;
+    top: 1rem;
+    left: 3.5rem;
+    z-index: 1001;
+}
+
+.sidebar {
+    width: 250px;
+    background: #ffffff; 
+    padding: 1.5rem;
+    height: 100vh;
+    position: fixed;
+    top: 0;
+    right: -250px; 
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    color: #1a2a4a;
+    transition: right 0.3s ease; 
+    z-index: 1000;
+}
+
+    .sidebar.active {
+        right: 0; 
+    }
+
+    .sidebar h2 {
+        font-size: 1.2rem;
+        color: #1a2a4a;
+        margin-bottom: 1.5rem;
+    }
+
+    .sidebar ul {
+        list-style: none;
+        padding: 0;
+    }
+
+    .sidebar li {
+        margin-bottom: 1rem;
+        border-left: 4px solid #1f4e8c; 
+        padding-left: 0.5rem;
+    }
+
+    .sidebar button {
+        background: none;
+        border: none;
+        color: #1f4e8c;
+        font-weight: 600;
+        padding: 0.75rem 1rem;
+        text-align: right;
+        width: 100%;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: background-color 0.3s ease, color 0.3s ease;
+    }
+
+        .sidebar button:hover,
+        .sidebar button:focus {
+            background-color: #e6f0fa;
+            color: #145dbf;
+        }
+
+
+.default-view {
+    text-align: center;
+    padding-top: 60px; 
+}
+
+    .default-view img {
+        max-width: 300px;
+        height: auto;
+    }
+
+/* Submenu styles */
+.menu-item {
+    position: relative;
+}
+
+.submenu-list {
+    display: none;
+    list-style: none;
+    padding: 0.5rem 0 0.5rem 0;
+    margin-right: 1rem; /* small indent */
+}
+
+.submenu:hover .submenu-list {
+    display: block;
+}
+
+.submenu-list li {
+    margin-bottom: 0.5rem;
+    border-left: none;
+}
+
+
+.submenu-list li button {
+    background: none;
+    border: none;
+    color: #1f4e8c;
+    font-weight: 600;
+    padding: 0.75rem 1rem;
+    text-align: right;
+    width: 100%;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.submenu-list li button:hover,
+.submenu-list li button:focus {
+    background-color: #e6f0fa;
+    color: #145dbf;
+}

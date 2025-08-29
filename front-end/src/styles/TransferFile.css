@@ -1,0 +1,170 @@
+.transfer-form-container,
+.update-user-container {
+    background-color: white;
+    width: 800px;
+    padding: 20px;
+    border: 2px solid #1f4e8c;
+    border-radius: 10px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+    text-align: right;
+    margin: 20px;
+    position: relative;
+    margin-right: 80px; /*Just addeed*/
+}
+
+.add-file-btn {
+    background-color: #4CAF50;
+    color: white;
+    padding: 15px 25px;
+    border: none;
+    border-radius: 6px;
+    margin-top: 20px;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 18px;
+    width: 100%;
+}
+
+    .add-file-btn:hover {
+        background-color: #45a049;
+    }
+
+
+
+.form-row {
+    display: flex;
+    gap: 20px;
+}
+
+.form-group {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.checkbox-group {
+    justify-content: center;
+    margin-top: 15px;
+    margin-bottom: 15px;
+}
+
+.transfer-form label,
+.add-file-form label {
+    font-weight: 600;
+    margin-bottom: 5px;
+}
+
+.transfer-form input,
+.transfer-form select,
+.add-file-form input,
+.add-file-form select {
+    padding: 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 16px;
+}
+
+
+.form-buttons {
+    display: flex;
+    gap: 15px;
+    justify-content: flex-start;
+    margin-top: 20px;
+}
+
+.submit-btn {
+    background-color: #1877f2;
+    color: white;
+    padding: 12px 20px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: bold;
+}
+
+.cancel-btn {
+    background-color: #ccc;
+    color: #333;
+    padding: 12px 20px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: bold;
+}
+
+.submit-btn:hover {
+    background-color: #145dbf;
+}
+
+.cancel-btn:hover {
+    background-color: #aaa;
+}
+
+.add-file-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0,0,0,0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.add-file-form {
+    background-color: white;
+    width: 900px;
+    max-height: 90vh;
+    overflow-y: auto;
+    padding: 30px;
+    border-radius: 10px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+    position: relative;
+}
+
+.close-btn {
+    position: absolute;
+    top: 15px;
+    left: 15px;
+    background: none;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+}
+
+@media (max-width: 900px) {
+    .transfer-form-container,
+    .add-file-form {
+        width: 95%;
+        margin: 10px;
+    }
+
+    .form-row {
+        flex-direction: column;
+        gap: 10px;
+    }
+}
+
+.input-error {
+    border: 1px solid #e74c3c; /* subtle red border */
+    background-color: #fdecea; /* very light red/pink background */
+    outline: none;
+}
+
+.input-success {
+    border: 1px solid #2ecc71;
+    background-color: #eafaf1; /* very light green background */
+    outline: none;
+}
+
+.ownership-msg {
+    font-size: 0.85em;
+    color: #e74c3c; /* red for error messages */
+    margin-top: 4px;
+    display: block;
+}
+

@@ -1,0 +1,93 @@
+form label, label {
+    display: block;
+    text-align: right;
+    margin-bottom: 6px;
+    font-weight: 600;
+    color: #333;
+}
+
+form input,
+form select {
+    width: 100%;
+    padding: 14px 12px;
+    margin-bottom: 16px;
+    font-size: 16px;
+    border: 1px solid #dddfe2;
+    border-radius: 6px;
+    box-sizing: border-box;
+    transition: border-color 0.3s ease;
+}
+
+    form input:focus,
+    form select:focus {
+        border-color: #1877f2;
+        outline: none;
+    }
+
+form button {
+    width: 100%;
+    padding: 14px 12px;
+    margin-bottom: 16px;
+    background-color: #1877f2;
+    border: none;
+    border-radius: 6px;
+    color: white;
+    font-size: 18px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+    form button:hover {
+        background-color: #145dbf;
+    }
+
+.form-group {
+    text-align: right;
+}
+
+.form-label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: bold;
+    color: #555;
+}
+
+.form-input {
+    width: 100%;
+    padding: 10px 15px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 1em;
+    box-sizing: border-box;
+}
+
+    .form-input:focus {
+        border-color: #007bff;
+        outline: none;
+        box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.25);
+    }
+
+.form-group-button {
+    text-align: right;
+}
+
+.action-button { 
+    display: inline-block;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    font-size: 1em;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    font-weight: bold;
+    color: #fff;
+}
+
+    .action-button.primary-button { 
+        background-color: #1877f2;
+    }
+
+        .action-button.primary-button:hover:not(:disabled) {
+            background-color: #145dbf;
+        }

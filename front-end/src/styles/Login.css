@@ -1,0 +1,30 @@
+
+.login-container {
+    background-color: white;
+    width: 360px;
+    padding: 30px 40px 40px 40px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    text-align: center;
+    margin: 0 auto; 
+    border: 2px solid #1f4e8c;
+}
+
+.logo-container {
+    margin-bottom: 20px;
+}
+
+    .logo-container img {
+        width: 90px;
+        height: auto;
+        display: block;
+        margin: 0 auto 10px auto;
+    }
+
+    .logo-container h2 {
+        font-size: 17px;
+        font-weight: 700;
+        color: #1877f2;
+        margin: 0;
+        line-height: 1.2;
+    }
