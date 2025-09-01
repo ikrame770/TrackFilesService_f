@@ -141,21 +141,71 @@ namespace WebApplication2.Controllers
             return Ok(allFiles);
         }
 
-        [HttpGet("verify")]
-        public async Task<IActionResult> VerifyEntity([FromQuery] string entityNumber)
+        [HttpGet("my-entities")]
+        public async Task<IActionResult> GetMyEntities()
         {
             var userIdString = HttpContext.Session.GetString("Id");
-            if (string.IsNullOrEmpty(userIdString)) return Unauthorized(new { message = "غير مسموح" });
-            if (!int.TryParse(userIdString, out int userId)) return Unauthorized(new { message = "غير مسموح" });
+            if (string.IsNullOrEmpty(userIdString))
+                return Unauthorized(new { message = "غير مسموح" });
 
-            var entity = await _context.Entities.FirstOrDefaultAsync(e => e.EntityNumber == entityNumber);
-            if (entity == null)
-                return Ok(new { exists = false, owned = false });
+            if (!int.TryParse(userIdString, out int userId))
+                return Unauthorized(new { message = "غير مسموح" });
 
-            bool owned = entity.OwnerId == userId;
-            return Ok(new { exists = true, owned });
+            // Get all entities owned by the user
+            var ownedEntities = _context.Entities
+                .Where(e => e.OwnerId == userId);
+
+            // Get entities that have a transfer with status Sent
+            var sentEntityNumbers = await _context.Transfers
+                .Where(t => t.FromUserId == userId && t.Status == TransferStatus.Sent)
+                .Select(t => t.Entity.EntityNumber)
+                .ToListAsync();
+
+            // Exclude sent entities
+            var availableEntities = await ownedEntities
+                .Where(e => !sentEntityNumbers.Contains(e.EntityNumber))
+                .Select(e => e.EntityNumber)
+                .ToListAsync();
+
+            return Ok(availableEntities);
         }
 
+
+        // GET: api/entity/check?fileNumber=...
+        [HttpGet("check")]
+        public async Task<IActionResult> CheckOwnership([FromQuery] string fileNumber)
+        {
+            var userIdString = HttpContext.Session.GetString("Id");
+            if (string.IsNullOrEmpty(userIdString))
+                return Unauthorized(new { message = "غير مسموح" });
+
+            if (!int.TryParse(userIdString, out int userId))
+                return Unauthorized(new { message = "غير مسموح" });
+
+
+            int currentUserId = userId; // get the current logged-in user ID
+
+            // Query: entity exists, is owned by user, and has no Sent transfer
+            var result = await _context.Entities
+                .Where(e => e.EntityNumber == fileNumber && e.OwnerId == currentUserId)
+                .Select(e => new 
+                {
+                    CanTransfer = !_context.Transfers
+                        .Any(t => t.EntityId == e.EntityId && t.Status == TransferStatus.Sent),
+                    EntityExists = true
+                })
+                .FirstOrDefaultAsync();
+
+            if (result == null)
+            {
+                return Ok(new { canTransfer = false, reason = "not-owned-or-missing" });
+            }
+
+            return Ok(result.CanTransfer 
+                ? new { canTransfer = true, reason = "ok" } 
+                : new { canTransfer = false, reason = "already-sent" });
+        }
+                
     }
     public class FileDto
         {

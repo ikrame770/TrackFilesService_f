@@ -99,7 +99,7 @@ function CreateUser() {
 
                 <div className="form-row">
                     <div className="form-group">
-                        <label>رقم CNE</label>
+                        <label>رقم CNI</label>
                         <input name="cne" type="text" value={signupData.cne} onChange={handleSignupChange} required />
                     </div>
 

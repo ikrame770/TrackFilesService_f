@@ -1,158 +1,280 @@
 ﻿import React, { useState, useEffect, useCallback } from "react";
-import "./styles/App.css";
-import "./styles/FileReceive.css";
 import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
 
-const TransfersCompleted = () => {
-    const [transfers, setTransfers] = useState([]);
-    const [loading, setLoading] = useState(false);
-    const [message, setMessage] = useState(null);
-    const [pageNumber, setPageNumber] = useState(1);
-    const [pageSize] = useState(10);
-    const [totalPages, setTotalPages] = useState(1);
+import "./styles/App.css";
+import "./styles/FileReceive.css";
+import "./styles/modelTransfersCompleted.css";
 
-    const fetchTransfers = useCallback(() => {
-        setLoading(true);
-        setMessage(null);
+import TransfersPage from "./TransfersPage";
 
-        fetch(`http://localhost:5000/api/transfersin/completed?pageNumber=${pageNumber}&pageSize=${pageSize}`, {
-            credentials: "include",
-        })
-            .then((res) => {
-                if (!res.ok) throw new Error("فشل في جلب التحويلات المكتملة");
-                return res.json();
-            })
-            .then((data) => {
-                setTransfers(data.transfers);
-                setTotalPages(data.totalPages);
-                setMessage({ type: "success", text: "تم جلب التحويلات المكتملة بنجاح." });
-            })
-            .catch((err) => setMessage({ type: "error", text: err.message }))
-            .finally(() => setLoading(false));
-    }, [pageNumber, pageSize]);
+const TransfersCompleted = ({ user, onSelectFeature }) => {
+  const [transfers, setTransfers] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState(null);
 
-    useEffect(() => {
-        fetchTransfers();
-    }, [fetchTransfers]);
+  const [pageNumber, setPageNumber] = useState(1);
+  const pageSize = 20;
+  const [totalPages, setTotalPages] = useState(1);
 
-    const formatDate = (dateStr) => {
-        if (!dateStr) return "-";
-        const d = new Date(dateStr);
-        if (isNaN(d)) return "-";
-        return d.toISOString().split("T")[0]; // "YYYY-MM-DD"
-    };
+  // Filters
+  const [filterNumber, setFilterNumber] = useState("");
+  const [filterSujet, setFilterSujet] = useState("");
+  const [filterSentDate, setFilterSentDate] = useState("");
+  const [filterAcceptedDate, setFilterAcceptedDate] = useState("");
 
-    const exportToExcel = () => {
-        if (!transfers.length) return;
+  // Modal state
+  const [transferModalData, setTransferModalData] = useState(null);
 
-        const worksheet = XLSX.utils.json_to_sheet(
-            transfers.map((t) => ({
-                "رقم الملف": t.entityNumber ?? "N/A",
-                "الموضوع": t.sujet ?? "N/A",
-                "من": t.from ?? "N/A",
-                "إلى": t.to ?? "N/A",
-                "الحالة": t.status ?? "N/A",
-                "تاريخ الإرسال": formatDate(t.dateSent),
-                "تاريخ القبول": formatDate(t.dateAccepted),
-            }))
-        );
+  // Fetch completed transfers
+  const fetchTransfers = useCallback(async () => {
+    setLoading(true);
+    setMessage(null);
 
-        const workbook = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(workbook, worksheet, "التحويلات المكتملة");
+    try {
+      const res = await fetch(
+        `http://localhost:5000/api/transfersin/completed?pageNumber=1&pageSize=1000`,
+        { credentials: "include" }
+      );
+      if (!res.ok) throw new Error("فشل في جلب التحويلات المكتملة");
 
-        const excelBuffer = XLSX.write(workbook, { bookType: "xlsx", type: "array" });
-        const data = new Blob([excelBuffer], { type: "application/octet-stream" });
-        saveAs(data, `completed_transfers_page${pageNumber}.xlsx`);
-    };
+      const data = await res.json();
+      const sortedTransfers = data.transfers.sort(
+        (a, b) => new Date(b.dateSent) - new Date(a.dateSent)
+      );
 
-    return (
-        <div className="app-container">
-            <div className="content-card">
-                {/* Header */}
-                <div className="header-section">
-                    <h1 className="main-title">سجل التداول الخاص بالحساب</h1>
-                    <p className="subtitle">هنا يمكنك مراجعة جميع الأنشطة التي تمت على هذا الحساب.</p>
-                    <button className="export-btn" onClick={exportToExcel}>
-                        ⬇️ تصدير إلى Excel
-                    </button>
-                </div>
+      setTransfers(sortedTransfers);
+      setTotalPages(Math.ceil(sortedTransfers.length / pageSize));
+      setPageNumber(1);
+    } catch (err) {
+      setMessage({ type: "error", text: err.message });
+    } finally {
+      setLoading(false);
+    }
+  }, [pageSize]);
 
-                {/* Messages */}
-                {message && (
-                    <div className={`message-box ${message.type}-message rtl`}>
-                        {message.text}
-                    </div>
-                )}
+  useEffect(() => {
+    fetchTransfers();
+  }, [fetchTransfers]);
 
-                {/* Loading */}
-                {loading && (
-                    <div className="loading-indicator">
-                        <div className="spinner"></div>
-                        <p className="loading-text">جاري جلب التحويلات...</p>
-                    </div>
-                )}
+  // Format date
+  const formatDate = (dateStr) => {
+    if (!dateStr) return "-";
+    const d = new Date(dateStr);
+    return isNaN(d) ? "-" : d.toISOString().split("T")[0];
+  };
 
-                {/* No results */}
-                {!loading && transfers.length === 0 && (
-                    <div className="no-dossiers">
-                        <p>لا توجد تحويلات مكتملة حالياً.</p>
-                    </div>
-                )}
-
-                {/* Table */}
-                {!loading && transfers.length > 0 && (
-                    <>
-                        <div className="table-container">
-                            <table className="dossiers-table rtl">
-                                <thead>
-                                    <tr>
-                                        <th style={{ width: "15%" }}>رقم الملف</th>
-                                        <th style={{ width: "25%" }}>الموضوع</th>
-                                        <th style={{ width: "20%" }}>من</th>
-                                        <th style={{ width: "20%" }}>إلى</th>
-                                        <th style={{ width: "15%" }}>تاريخ الإرسال</th>
-                                        <th style={{ width: "15%" }}>تاريخ القبول</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {transfers.map((t) => (
-                                        <tr key={t.transferId}>
-                                            <td>{t.entityNumber ?? "N/A"}</td>
-                                            <td>{t.sujet ?? "N/A"}</td>
-                                            <td>{t.from ?? "N/A"}</td>
-                                            <td>{t.to ?? "N/A"}</td>
-                                            <td>{formatDate(t.dateSent)}</td>
-                                            <td>{formatDate(t.dateAccepted)}</td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
-
-                        {/* Pagination */}
-                        <div className="pagination rtl">
-                            <button
-                                className="page-btn"
-                                onClick={() => setPageNumber((prev) => Math.max(prev - 1, 1))}
-                                disabled={pageNumber === 1}
-                            >
-                                {"< السابق"}
-                            </button>
-                            <span className="page-info">{pageNumber} / {totalPages}</span>
-                            <button
-                                className="page-btn"
-                                onClick={() => setPageNumber((prev) => Math.min(prev + 1, totalPages))}
-                                disabled={pageNumber === totalPages}
-                            >
-                                {"التالي >"}
-                            </button>
-                        </div>
-                    </>
-                )}
-            </div>
-        </div>
+  // Filtered & paginated transfers
+  const filteredTransfers = transfers
+    .filter((t) => !filterNumber || t.entityNumber.includes(filterNumber))
+    .filter((t) => !filterSujet || (t.sujet ?? "").includes(filterSujet))
+    .filter((t) => !filterSentDate || formatDate(t.dateSent) === filterSentDate)
+    .filter(
+      (t) => !filterAcceptedDate || formatDate(t.dateAccepted) === filterAcceptedDate
     );
+
+  const paginatedTransfers = filteredTransfers.slice(
+    (pageNumber - 1) * pageSize,
+    pageNumber * pageSize
+  );
+
+  // Export to Excel
+  const exportToExcel = () => {
+    if (!filteredTransfers.length) return;
+
+    const worksheet = XLSX.utils.json_to_sheet(
+      filteredTransfers.map((t) => ({
+        "رقم الملف": t.entityNumber ?? "N/A",
+        "الموضوع": t.sujet ?? "N/A",
+        "من": t.from ?? "N/A",
+        "إلى": t.to ?? "N/A",
+        "الحالة": t.status ?? "N/A",
+        "تاريخ الإرسال": formatDate(t.dateSent),
+        "تاريخ القبول": formatDate(t.dateAccepted),
+      }))
+    );
+
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "التحويلات المكتملة");
+    const excelBuffer = XLSX.write(workbook, { bookType: "xlsx", type: "array" });
+    saveAs(
+      new Blob([excelBuffer], { type: "application/octet-stream" }),
+      `completed_transfers.xlsx`
+    );
+  };
+
+  const goToFirstPage = () => setPageNumber(1);
+  const goToLastPage = () => setPageNumber(totalPages);
+
+  // Open Transfer modal (create new transfer from completed one)
+  const handleOpenTransferModal = async (transfer) => {
+    try {
+      const fileNumber = transfer.entityNumber;
+
+      // Verify ownership
+      const res = await fetch("http://localhost:5000/api/entity/my-entities", {
+        credentials: "include",
+      });
+      if (!res.ok) throw new Error("فشل في التحقق من ملكية الملف");
+
+      const ownedFiles = await res.json();
+      const exists = ownedFiles.includes(fileNumber);
+
+      if (!exists) {
+        setMessage({ type: "error", text: "⚠️ الملف غير موجود أو ليس ملكك." });
+        return;
+      }
+
+      // Open modal in CREATE mode
+      setTransferModalData({
+        entityNumber: fileNumber,
+        type: transfer.type,
+        mode: "create",
+      });
+    } catch (err) {
+      setMessage({ type: "error", text: "⚠️ حدث خطأ أثناء التحقق من الملف." });
+      console.error(err);
+    }
+  };
+
+  return (
+    <div className="app-container">
+      <div className="content-card">
+        {/* Header */}
+        <div className="header-section">
+          <h1 className="main-title">سجل التداول الخاص بالحساب</h1>
+          <p className="subtitle">
+            هنا يمكنك مراجعة جميع الأنشطة التي تمت على هذا الحساب.
+          </p>
+          <button className="export-btn" onClick={exportToExcel}>
+            ⬇️ تصدير إلى Excel
+          </button>
+        </div>
+
+        {/* Filters */}
+        <div className="filters" style={{ marginBottom: "10px" }}>
+          <input
+            type="text"
+            placeholder="رقم الملف"
+            value={filterNumber}
+            onChange={(e) => setFilterNumber(e.target.value)}
+          />
+          <input
+            type="text"
+            placeholder="الموضوع"
+            value={filterSujet}
+            onChange={(e) => setFilterSujet(e.target.value)}
+          />
+          <input
+            type="date"
+            placeholder="تاريخ الإرسال"
+            value={filterSentDate}
+            onChange={(e) => setFilterSentDate(e.target.value)}
+          />
+          <input
+            type="date"
+            placeholder="تاريخ القبول"
+            value={filterAcceptedDate}
+            onChange={(e) => setFilterAcceptedDate(e.target.value)}
+          />
+        </div>
+
+        {message && (
+          <div className={`message-box ${message.type}-message rtl`}>
+            {message.text}
+          </div>
+        )}
+
+        {loading && (
+          <div className="loading-indicator">
+            <div className="spinner"></div>
+            <p className="loading-text">جاري جلب التحويلات...</p>
+          </div>
+        )}
+
+        {!loading && paginatedTransfers.length === 0 && (
+          <div className="no-dossiers">
+            <p>لا توجد تحويلات مكتملة حالياً.</p>
+          </div>
+        )}
+
+        {!loading && paginatedTransfers.length > 0 && (
+          <>
+            <div className="table-container">
+              <table className="dossiers-table rtl">
+                <thead>
+                  <tr>
+                    <th>رقم الملف</th>
+                    <th>الموضوع</th>
+                    <th>من</th>
+                    <th>إلى</th>
+                    <th>تاريخ الإرسال</th>
+                    <th>تاريخ القبول</th>
+                    <th>الاختصارات</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {paginatedTransfers.map((t) => (
+                    <tr key={t.transferId}>
+                      <td>{t.entityNumber ?? "-"}</td>
+                      <td>{t.sujet ?? "-"}</td>
+                      <td>{t.from ?? "-"}</td>
+                      <td>{t.to ?? "-"}</td>
+                      <td>{formatDate(t.dateSent)}</td>
+                      <td>{formatDate(t.dateAccepted)}</td>
+                      <td>
+                        <button onClick={() => handleOpenTransferModal(t)}>📤</button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Pagination */}
+            <div className="pagination rtl">
+              <button onClick={goToFirstPage} disabled={pageNumber === 1}>
+                {"<< أول صفحة"}
+              </button>
+              <button
+                onClick={() => setPageNumber((prev) => Math.max(prev - 1, 1))}
+                disabled={pageNumber === 1}
+              >
+                {"< السابق"}
+              </button>
+              <span className="page-info">
+                {pageNumber} / {totalPages}
+              </span>
+              <button
+                onClick={() => setPageNumber((prev) => Math.min(prev + 1, totalPages))}
+                disabled={pageNumber === totalPages}
+              >
+                {"التالي >"}
+              </button>
+              <button onClick={goToLastPage} disabled={pageNumber === totalPages}>
+                {"آخر صفحة >>"}
+              </button>
+            </div>
+          </>
+        )}
+
+        {/* Transfer Modal */}
+        {transferModalData && (
+          <div className="modal-overlay">
+            <TransfersPage
+              user={user}
+              onClose={() => {
+                setTransferModalData(null);
+                fetchTransfers(); // refresh after successful transfer
+              }}
+              transferToEdit={transferModalData}
+              mode={transferModalData.mode}
+            />
+          </div>
+        )}
+      </div>
+    </div>
+  );
 };
 
 export default TransfersCompleted;

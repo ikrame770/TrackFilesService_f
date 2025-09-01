@@ -1,0 +1,17 @@
+/* Full-screen modal overlay */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.3); /* optional semi-transparent background */
+  display: flex;
+  justify-content: flex-start; /* align to left */
+  align-items: flex-start;     /* align to top */
+  z-index: 9999;
+  padding-left: 20px;          /* move modal a little to the right */
+  padding-top: 20px;           /* optional: add top spacing */
+  box-sizing: border-box;
+}
+

@@ -531,6 +531,8 @@ namespace WebApplication2.Controllers
 
 
     }
+
+    // DTOs
     public class BatchTransferRequest
     {
         public List<int> EntityIds { get; set; } = new List<int>();
@@ -538,7 +540,7 @@ namespace WebApplication2.Controllers
         public string? ToRole { get; set; }
         public string? Content { get; set; }
     }
-    // DTOs
+    
     public class TransferRequest
     {
         public string EntityNumber { get; set; }

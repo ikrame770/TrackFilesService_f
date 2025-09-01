@@ -119,7 +119,7 @@ const TransfersInbox = () => {
             <div className="content-card">
                 <div className="header-section">
                     <h1 className="main-title">
-                        رؤية الملفات المحالة (بانتظار الإجراء)
+                        الملفات المحالة (بانتظار الإجراء)
                     </h1>
                 </div>
 

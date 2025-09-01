@@ -20,18 +20,22 @@ function App() {
     <Router>
       <Routes>
         <Route path="/signin" element={<SignIn setUser={setUser} />} />
+
+        {/* Home wrapper for pages with sidebar */}
         <Route
           path="/"
           element={user ? <Home user={user} onLogout={onLogout} /> : <Navigate to="/signin" />}
-              />
+        >
+          <Route index element={<Home />} />
+          <Route path="file-history" element={<FileHistory />} />
+          <Route path="transfers" element={<TransfersPage user={user} />} />
+          <Route path="inbox" element={<TransfersInbox user={user} />} />
+          <Route path="registre" element={<TransfersCompleted user={user} />} />
+          <Route path="SentTransfers" element={<MySentTransfers user={user} />} />
+        </Route>
 
-              <Route path="/transfers" element={<TransfersPage user={user} />} />
-              <Route path="/inbox" element={<TransfersInbox user={user} />} />
-              <Route path="/registre" element={<TransfersCompleted user={user} />} />
-              <Route path="/SentTransfers" element={<MySentTransfers user={user} />} />
-              <Route path="/file-history" element={<FileHistory />} />
-              
       </Routes>
+
     </Router>
   );
 }

@@ -136,7 +136,7 @@ namespace WebApplication2.Controllers
 
 
         [HttpGet("completed")]
-        public async Task<IActionResult> GetCompletedTransfers(int pageNumber = 1, int pageSize = 10)
+        public async Task<IActionResult> GetCompletedTransfers(int pageNumber = 1, int pageSize = 20)
         {
             var username = HttpContext.Session.GetString("Username");
             if (string.IsNullOrEmpty(username))
