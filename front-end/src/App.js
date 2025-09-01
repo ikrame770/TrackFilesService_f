@@ -9,19 +9,17 @@ import MySentTransfers from "./MySentTransfers";
 import FileHistory from "./FileHistory";
 
 function App() {
-  const [user, setUser] = useState(null); // store user info after sign-in
+  const [user, setUser] = useState(null); // signed-in user
 
   const onLogout = () => {
-    setUser(null);           // Clear user state
-    window.location.href = "/signin"; // Optional redirect
+    setUser(null);                 
+    window.location.href = "/signin"; 
   };
 
   return (
     <Router>
       <Routes>
         <Route path="/signin" element={<SignIn setUser={setUser} />} />
-
-        {/* Home wrapper for pages with sidebar */}
         <Route
           path="/"
           element={user ? <Home user={user} onLogout={onLogout} /> : <Navigate to="/signin" />}
@@ -33,12 +31,9 @@ function App() {
           <Route path="registre" element={<TransfersCompleted user={user} />} />
           <Route path="SentTransfers" element={<MySentTransfers user={user} />} />
         </Route>
-
       </Routes>
-
     </Router>
   );
 }
 
 export default App;
-

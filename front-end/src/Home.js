@@ -13,18 +13,16 @@ import ManageUsers from "./ManageUsers";
 import FileExplorerPage from "./FileExplorerPage";
 
 function Home({ user, onLogout }) {
-  const [selectedFeature, setSelectedFeature] = useState(null);
-  const [selectedFileNumber, setSelectedFileNumber] = useState(null);
-  
-  const [editingTransfer, setEditingTransfer] = useState(null);
+  const [selectedFeature, setSelectedFeature] = useState(null); // active sidebar feature
+  const [selectedFileNumber, setSelectedFileNumber] = useState(null); // optional file number for prefill
+  const [editingTransfer, setEditingTransfer] = useState(null); // transfer selected for editing
 
-
-  // Sidebar menu options
+  // Sidebar menu options based on user role
   const features =
     user.role === "admin"
       ? [
           { id: "create-user", label: "إنشاء حساب" },
-          { id: "manage-user", label: "حذف / تغيير معلومات خاصة بالحساب"  },
+          { id: "manage-user", label: "حذف / تغيير معلومات خاصة بالحساب" },
           { id: "file-history", label: "بحث عن ملف و رؤية كافة العمليات" },
         ]
       : [
@@ -42,14 +40,14 @@ function Home({ user, onLogout }) {
           { id: "file-history", label: "بحث عن ملف و رؤية كافة العمليات" },
         ];
 
-  // Select feature, optionally pass file number
+  // Handle sidebar feature selection
   const handleFeatureClick = (feature, fileNumber = null) => {
     setSelectedFeature(feature.id);
     setSelectedFileNumber(fileNumber);
     setEditingTransfer(null);
   };
 
-  // Edit transfer callback
+  // Callback to edit a transfer
   const handleEditTransfer = (transfer) => {
     setEditingTransfer(transfer);
     setSelectedFeature("edit-transfer");
@@ -57,7 +55,7 @@ function Home({ user, onLogout }) {
 
   return (
     <div style={{ display: "flex", height: "100vh", position: "relative" }}>
-      {/* Sidebar */}
+      {/* Sidebar navigation */}
       <aside className="sidebar" style={{ right: 0 }}>
         <div>
           <h2> مرحبا {user.username} </h2>
@@ -96,8 +94,9 @@ function Home({ user, onLogout }) {
         </button>
       </aside>
 
-      {/* Main content */}
+      {/* Main content area */}
       <main>
+        {/* Default view */}
         {selectedFeature === null && (
           <div className="default-view">
             {user.role === "admin" ? (
@@ -114,13 +113,13 @@ function Home({ user, onLogout }) {
 
         {/* Normal user features */}
         {selectedFeature === "registre" && (
-        <CompletedTransfers
-  user={user}
-  onSelectFeature={(featureId, fileNumber) => {
-    setSelectedFeature(featureId);
-    setSelectedFileNumber(fileNumber); // store the file number to prefill FileHistory
-  }}
-/>
+          <CompletedTransfers
+            user={user}
+            onSelectFeature={(featureId, fileNumber) => {
+              setSelectedFeature(featureId);
+              setSelectedFileNumber(fileNumber);
+            }}
+          />
         )}
         {selectedFeature === "inbox" && <TransfersInbox user={user} />}
         {selectedFeature === "file-history" && <FileHistory user={user} />}
@@ -130,7 +129,7 @@ function Home({ user, onLogout }) {
         {selectedFeature === "transfert" && <TransfersPage user={user} />}
         {selectedFeature === "FileExplorerPage" && <FileExplorerPage user={user} />}
 
-        {/* Edit transfer */}
+        {/* Edit transfer mode */}
         {selectedFeature === "edit-transfer" && editingTransfer && (
           <TransfersPage user={user} transferToEdit={editingTransfer} />
         )}

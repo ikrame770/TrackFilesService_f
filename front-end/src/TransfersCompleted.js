@@ -1,6 +1,6 @@
 ﻿import React, { useState, useEffect, useCallback } from "react";
-import * as XLSX from "xlsx";
-import { saveAs } from "file-saver";
+import * as XLSX from "xlsx"; // For exporting Excel
+import { saveAs } from "file-saver"; // For saving files locally
 
 import "./styles/App.css";
 import "./styles/FileReceive.css";
@@ -9,24 +9,28 @@ import "./styles/modelTransfersCompleted.css";
 import TransfersPage from "./TransfersPage";
 
 const TransfersCompleted = ({ user, onSelectFeature }) => {
+  // 🔹 State to store all transfers fetched from server
   const [transfers, setTransfers] = useState([]);
+  
+  // 🔹 Loading indicator and messages for user feedback
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState(null);
 
+  // 🔹 Pagination state
   const [pageNumber, setPageNumber] = useState(1);
-  const pageSize = 20;
+  const pageSize = 20; // number of rows per page
   const [totalPages, setTotalPages] = useState(1);
 
-  // Filters
+  // 🔹 Filters for table
   const [filterNumber, setFilterNumber] = useState("");
   const [filterSujet, setFilterSujet] = useState("");
   const [filterSentDate, setFilterSentDate] = useState("");
   const [filterAcceptedDate, setFilterAcceptedDate] = useState("");
 
-  // Modal state
+  // 🔹 Modal for opening transfer
   const [transferModalData, setTransferModalData] = useState(null);
 
-  // Fetch completed transfers
+  // 🔹 Fetch completed transfers from backend
   const fetchTransfers = useCallback(async () => {
     setLoading(true);
     setMessage(null);
@@ -39,13 +43,15 @@ const TransfersCompleted = ({ user, onSelectFeature }) => {
       if (!res.ok) throw new Error("فشل في جلب التحويلات المكتملة");
 
       const data = await res.json();
+
+      // Sort by dateSent descending
       const sortedTransfers = data.transfers.sort(
         (a, b) => new Date(b.dateSent) - new Date(a.dateSent)
       );
 
       setTransfers(sortedTransfers);
       setTotalPages(Math.ceil(sortedTransfers.length / pageSize));
-      setPageNumber(1);
+      setPageNumber(1); // Reset to first page
     } catch (err) {
       setMessage({ type: "error", text: err.message });
     } finally {
@@ -53,18 +59,19 @@ const TransfersCompleted = ({ user, onSelectFeature }) => {
     }
   }, [pageSize]);
 
+  // 🔹 Initial fetch on mount
   useEffect(() => {
     fetchTransfers();
   }, [fetchTransfers]);
 
-  // Format date
+  // 🔹 Format date for display
   const formatDate = (dateStr) => {
     if (!dateStr) return "-";
     const d = new Date(dateStr);
     return isNaN(d) ? "-" : d.toISOString().split("T")[0];
   };
 
-  // Filtered & paginated transfers
+  // 🔹 Apply filters to transfers
   const filteredTransfers = transfers
     .filter((t) => !filterNumber || t.entityNumber.includes(filterNumber))
     .filter((t) => !filterSujet || (t.sujet ?? "").includes(filterSujet))
@@ -73,12 +80,13 @@ const TransfersCompleted = ({ user, onSelectFeature }) => {
       (t) => !filterAcceptedDate || formatDate(t.dateAccepted) === filterAcceptedDate
     );
 
+  // 🔹 Paginate filtered transfers
   const paginatedTransfers = filteredTransfers.slice(
     (pageNumber - 1) * pageSize,
     pageNumber * pageSize
   );
 
-  // Export to Excel
+  // 🔹 Export filtered transfers to Excel
   const exportToExcel = () => {
     if (!filteredTransfers.length) return;
 
@@ -103,15 +111,16 @@ const TransfersCompleted = ({ user, onSelectFeature }) => {
     );
   };
 
+  // 🔹 Pagination helper functions
   const goToFirstPage = () => setPageNumber(1);
   const goToLastPage = () => setPageNumber(totalPages);
 
-  // Open Transfer modal (create new transfer from completed one)
+  // 🔹 Open Transfer modal from completed transfer
   const handleOpenTransferModal = async (transfer) => {
     try {
       const fileNumber = transfer.entityNumber;
 
-      // Verify ownership
+      // Verify if user owns this file
       const res = await fetch("http://localhost:5000/api/entity/my-entities", {
         credentials: "include",
       });
@@ -125,7 +134,7 @@ const TransfersCompleted = ({ user, onSelectFeature }) => {
         return;
       }
 
-      // Open modal in CREATE mode
+      // Open TransfersPage modal in CREATE mode
       setTransferModalData({
         entityNumber: fileNumber,
         type: transfer.type,
@@ -179,12 +188,14 @@ const TransfersCompleted = ({ user, onSelectFeature }) => {
           />
         </div>
 
+        {/* Messages */}
         {message && (
           <div className={`message-box ${message.type}-message rtl`}>
             {message.text}
           </div>
         )}
 
+        {/* Loading */}
         {loading && (
           <div className="loading-indicator">
             <div className="spinner"></div>
@@ -192,12 +203,14 @@ const TransfersCompleted = ({ user, onSelectFeature }) => {
           </div>
         )}
 
+        {/* No transfers */}
         {!loading && paginatedTransfers.length === 0 && (
           <div className="no-dossiers">
             <p>لا توجد تحويلات مكتملة حالياً.</p>
           </div>
         )}
 
+        {/* Transfers table */}
         {!loading && paginatedTransfers.length > 0 && (
           <>
             <div className="table-container">
@@ -265,7 +278,7 @@ const TransfersCompleted = ({ user, onSelectFeature }) => {
               user={user}
               onClose={() => {
                 setTransferModalData(null);
-                fetchTransfers(); // refresh after successful transfer
+                fetchTransfers(); // Refresh after successful transfer
               }}
               transferToEdit={transferModalData}
               mode={transferModalData.mode}

@@ -110,6 +110,7 @@ function TransfersPage({ user, onClose, transferToEdit, mode }) {
         if (!ownership.exists || !ownership.owned) return "input-error";
         if (ownership.exists && ownership.owned) return "input-success";
         return "";
+        
     };
 
     const handleSubmit = async (e) => {

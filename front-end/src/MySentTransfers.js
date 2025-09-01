@@ -4,18 +4,20 @@ import "./styles/form.css";
 import "./styles/EditTransfer.css";
 
 export default function MySentTransfers({ user }) {
+    // State for sent transfers, loading status, and messages
     const [transfers, setTransfers] = useState([]);
     const [loading, setLoading] = useState(true);
     const [message, setMessage] = useState(null);
 
+    // State for editing a transfer
     const [editingTransfer, setEditingTransfer] = useState(null);
-    const [roles, setRoles] = useState([]);
-    const [users, setUsers] = useState([]);
-    const [toRole, setToRole] = useState("");
-    const [toUser, setToUser] = useState("");
-    const [error, setError] = useState("");
+    const [roles, setRoles] = useState([]);        // Available roles to reassign
+    const [users, setUsers] = useState([]);        // Users corresponding to selected role
+    const [toRole, setToRole] = useState("");      // Selected role in edit form
+    const [toUser, setToUser] = useState("");      // Selected user in edit form
+    const [error, setError] = useState("");        // Error messages in edit form
 
-    // Fetch transfers on mount
+    // Fetch all sent transfers when component mounts
     useEffect(() => {
         const fetchTransfers = async () => {
             setLoading(true);
@@ -31,11 +33,10 @@ export default function MySentTransfers({ user }) {
                 setLoading(false);
             }
         };
-
         fetchTransfers();
     }, []);
 
-    // Fetch roles (exclude admin and current user's role)
+    // Fetch all available roles except admin and current user's role
     useEffect(() => {
         let isMounted = true;
         const fetchRoles = async () => {
@@ -43,9 +44,12 @@ export default function MySentTransfers({ user }) {
                 const res = await fetch("http://localhost:5000/api/transfers/roles", { credentials: "include" });
                 const data = await res.json();
                 let filteredRoles = data.filter(r => r !== "admin" && r !== user.role);
+                
+                // Keep editing role if already assigned
                 if (editingTransfer?.toRole && !filteredRoles.includes(editingTransfer.toRole)) {
                     filteredRoles.push(editingTransfer.toRole);
                 }
+                
                 if (isMounted) setRoles(filteredRoles);
             } catch (err) {
                 console.error(err);
@@ -55,7 +59,7 @@ export default function MySentTransfers({ user }) {
         return () => { isMounted = false; };
     }, [editingTransfer, user.role]);
 
-    // Fetch users for selected role (exclude admin and current user)
+    // Fetch users for the selected role (exclude admin and current user)
     useEffect(() => {
         let isMounted = true;
         if (!toRole) return setUsers([]);
@@ -65,6 +69,8 @@ export default function MySentTransfers({ user }) {
                 const res = await fetch(`http://localhost:5000/api/transfers/users/${toRole}`, { credentials: "include" });
                 const data = await res.json();
                 let filteredUsers = data.filter(u => u.role !== "admin" && u.id !== user.id);
+
+                // Keep the currently assigned user in the list
                 if (editingTransfer?.toUserId && editingTransfer.toUserId !== user.id &&
                     !filteredUsers.some(u => u.id === editingTransfer.toUserId)) {
                     filteredUsers.push({
@@ -78,10 +84,10 @@ export default function MySentTransfers({ user }) {
             }
         };
         fetchUsers();
-
         return () => { isMounted = false; };
     }, [toRole, editingTransfer, user.id]);
 
+    // Cancel a sent transfer
     const cancelTransfer = async id => {
         try {
             const res = await fetch(`http://localhost:5000/api/transfers/${id}`, {
@@ -90,6 +96,8 @@ export default function MySentTransfers({ user }) {
             });
             const data = await res.json();
             if (!res.ok) throw new Error(data.message || "فشل في إلغاء الإحالة");
+
+            // Remove cancelled transfer from state
             setTransfers(prev => prev.filter(t => t.transferId !== id));
             setMessage({ type: "success", text: "تم إلغاء الإحالة بنجاح" });
         } catch (err) {
@@ -97,6 +105,7 @@ export default function MySentTransfers({ user }) {
         }
     };
 
+    // Open edit form for a selected transfer
     const openEdit = transfer => {
         setEditingTransfer(transfer);
         setToRole(transfer.toRole || "");
@@ -104,6 +113,7 @@ export default function MySentTransfers({ user }) {
         setError("");
     };
 
+    // Handle updating a transfer
     const handleUpdate = async () => {
         if (!toRole) return setError("⚠️ الرجاء اختيار جهة المحال إليها");
 
@@ -129,6 +139,7 @@ export default function MySentTransfers({ user }) {
         }
     };
 
+    // Show loading state if transfers are being fetched
     if (loading) return <p className="loading-text">جاري جلب الإحالات المرسلة...</p>;
 
     return (
@@ -136,6 +147,7 @@ export default function MySentTransfers({ user }) {
             <h2>إمكانية تغيير إحالة الملفات</h2>
             {message && <div className={`message-box ${message.type}-message rtl`}>{message.text}</div>}
 
+            {/* Transfers table */}
             <table>
                 <thead>
                     <tr>
@@ -172,6 +184,7 @@ export default function MySentTransfers({ user }) {
                 </tbody>
             </table>
 
+            {/* Edit transfer form */}
             {editingTransfer && (
                 <div className="edit-form">
                     <h3>تعديل إحالة الملف</h3>

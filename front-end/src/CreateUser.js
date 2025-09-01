@@ -12,19 +12,21 @@ function CreateUser() {
         confirmPassword: "",
     });
 
-    const [passwordError, setPasswordError] = useState("");
-    const [confirmError, setConfirmError] = useState("");
-    const [message, setMessage] = useState(null); // success or error
+    const [passwordError, setPasswordError] = useState(""); // validation message for password
+    const [confirmError, setConfirmError] = useState("");   // validation message for confirm password
+    const [message, setMessage] = useState(null);           // success/error feedback
 
     const handleSignupChange = (e) => {
         const { name, value } = e.target;
         setSignupData({ ...signupData, [name]: value });
 
+        // Password length check
         if (name === "password") {
             setPasswordError(value.length > 0 && value.length < 8 ? "كلمة المرور يجب أن تحتوي على الأقل 8 أحرف" : "");
             setConfirmError(signupData.confirmPassword && value !== signupData.confirmPassword ? "كلمتا المرور غير متطابقتين" : "");
         }
 
+        // Confirm password match check
         if (name === "confirmPassword") {
             setConfirmError(value !== signupData.password ? "كلمتا المرور غير متطابقتين" : "");
         }
@@ -33,11 +35,11 @@ function CreateUser() {
     const handleSignupSubmit = async (e) => {
         e.preventDefault();
 
+        // Final validations before sending
         if (signupData.password.length < 8) {
             setPasswordError("كلمة المرور يجب أن تحتوي على الأقل 8 أحرف");
             return;
         }
-
         if (signupData.password !== signupData.confirmPassword) {
             setConfirmError("كلمتا المرور غير متطابقتين");
             return;
@@ -47,13 +49,13 @@ function CreateUser() {
             const res = await fetch("http://localhost:5000/api/SignUp", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                credentials: "include", // important! sends session cookie
+                credentials: "include", // include cookies for session
                 body: JSON.stringify({
                     firstName: signupData.firstName,
                     lastName: signupData.lastName,
                     cne: signupData.cne,
-                    role: signupData.role,   // e.g., "كاتب ضبط" or "الصندوق"
-                    passwordHash: signupData.password // plain password
+                    role: signupData.role,
+                    passwordHash: signupData.password
                 }),
             });
 
@@ -63,6 +65,7 @@ function CreateUser() {
 
             setMessage({ type: "success", text: "✅ تم إنشاء الحساب بنجاح !" });
 
+            // Reset form
             setSignupData({
                 firstName: "",
                 lastName: "",

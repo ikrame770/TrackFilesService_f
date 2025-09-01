@@ -1,8 +1,8 @@
-﻿// FileExplorerPage.js
-import React, { useState, useEffect } from "react";
+﻿import React, { useState, useEffect } from "react";
 import "./styles/App.css";
 import "./styles/form.css";
 import "./styles/FileExplorerPage.css";
+
 function BatchTransferModal({ selectedFiles, onClose, onTransfer, user, isEdit = false }) {
     const [roles, setRoles] = useState([]);
     const [users, setUsers] = useState([]);
@@ -10,22 +10,18 @@ function BatchTransferModal({ selectedFiles, onClose, onTransfer, user, isEdit =
     const [toUserId, setToUserId] = useState("");
     const [content, setContent] = useState("");
 
-
-    // Fetch roles
     useEffect(() => {
         if (!user?.role) return;
         const fetchRoles = async () => {
             try {
                 const res = await fetch("http://localhost:5000/api/transfers/roles", { credentials: "include" });
                 const data = await res.json();
-                const filteredRoles = data.filter(r => r.toLowerCase() !== "admin" && r !== user.role);
-                setRoles(filteredRoles);
+                setRoles(data.filter(r => r.toLowerCase() !== "admin" && r !== user.role));
             } catch (err) { console.error(err); }
         };
         fetchRoles();
     }, [user]);
 
-    // Fetch users for selected role
     useEffect(() => {
         if (!toRole) {
             setUsers([]);
@@ -36,8 +32,7 @@ function BatchTransferModal({ selectedFiles, onClose, onTransfer, user, isEdit =
             try {
                 const res = await fetch(`http://localhost:5000/api/transfers/users/${toRole}`, { credentials: "include" });
                 const data = await res.json();
-                const filteredUsers = data.filter(u => u.role.toLowerCase() !== "admin" && u.id !== user.id);
-                setUsers(filteredUsers);
+                setUsers(data.filter(u => u.role.toLowerCase() !== "admin" && u.id !== user.id));
             } catch (err) { console.error(err); }
         };
         fetchUsers();
@@ -52,8 +47,6 @@ function BatchTransferModal({ selectedFiles, onClose, onTransfer, user, isEdit =
         const body = isEdit
             ? { transferIds: selectedFiles.map(id => Number(id)), toRole, toUserId, content }
             : { entityIds: selectedFiles.map(id => Number(id)), toRole, toUserId, content };
-
-
 
         try {
             const url = isEdit
@@ -113,8 +106,6 @@ export default function FileExplorerPage({ user }) {
     const [loading, setLoading] = useState(true);
     const [selectedFiles, setSelectedFiles] = useState([]);
     const [showBatchModal, setShowBatchModal] = useState(false);
-
-    // Filters
     const [filterNumber, setFilterNumber] = useState("");
     const [filterSource, setFilterSource] = useState("");
     const [filterStartDate, setFilterStartDate] = useState("");
@@ -124,7 +115,7 @@ export default function FileExplorerPage({ user }) {
         try {
             const res = await fetch("http://localhost:5000/api/entity/reunion", { credentials: "include" });
             const data = await res.json();
-            const normalized = data.map(f => ({
+            setFiles(data.map(f => ({
                 id: f.id ?? f.entityId,
                 number: f.number ?? f.entityNumber,
                 sujet: f.sujet,
@@ -136,8 +127,7 @@ export default function FileExplorerPage({ user }) {
                 date: f.date,
                 fromOrTo: f.fromOrTo,
                 source: f.source,
-            }));
-            setFiles(normalized);
+            })));
         } catch (err) { console.error(err); }
         finally { setLoading(false); }
     };
@@ -147,18 +137,10 @@ export default function FileExplorerPage({ user }) {
     const toggleFileSelection = (fileId) => {
         const clickedFile = files.find(f => f.id === fileId);
         if (!clickedFile) return;
-
-        if (selectedFiles.length === 0) {
-            setSelectedFiles([fileId]);
-            return;
-        }
-
-        const firstSelected = files.find(f => f.id === selectedFiles[0]);
-        if (clickedFile.source !== firstSelected.source) {
+        if (selectedFiles.length && clickedFile.source !== files.find(f => f.id === selectedFiles[0]).source) {
             alert("🚫 لا يمكنك تحديد ملفات بمصدر مختلف.");
             return;
         }
-
         setSelectedFiles(prev =>
             prev.includes(fileId) ? prev.filter(id => id !== fileId) : [...prev, fileId]
         );
@@ -166,7 +148,6 @@ export default function FileExplorerPage({ user }) {
 
     const handleCancelTransfers = async () => {
         if (!window.confirm("هل أنت متأكد من إلغاء الإحالات المحددة؟")) return;
-
         try {
             const res = await fetch("http://localhost:5000/api/transfers/cancel-batch", {
                 method: "POST",
@@ -217,7 +198,6 @@ export default function FileExplorerPage({ user }) {
 
     if (loading) return <p>جاري التحميل...</p>;
 
-    // Apply filters
     const filteredFiles = files.filter(f => {
         const numberMatch = f.number.toLowerCase().includes(filterNumber.toLowerCase());
         const sourceMatch = filterSource ? f.source.toLowerCase() === filterSource.toLowerCase() : true;
@@ -234,7 +214,6 @@ export default function FileExplorerPage({ user }) {
         <div className="file-explorer">
             <h2>جميع الملفات</h2>
 
-            {/* Filters */}
             <div className="filters" style={{ marginBottom: "10px" }}>
                 <label>رقم الملف</label>
                 <input
@@ -244,7 +223,6 @@ export default function FileExplorerPage({ user }) {
                     onChange={(e) => setFilterNumber(e.target.value)}
                     style={{ marginRight: "10px" }}
                 />
-                
                 <select
                     value={filterSource}
                     onChange={(e) => setFilterSource(e.target.value)}
@@ -253,7 +231,7 @@ export default function FileExplorerPage({ user }) {
                     <option value="">الحالة</option>
                     <option value="Owned">ملفاتي</option>
                     <option value="Sent">الملفات المرسلة</option>
-                    <option value="Received"> محالة على الحساب</option>
+                    <option value="Received">محالة على الحساب</option>
                 </select>
                 <label>من</label>
                 <input
@@ -270,21 +248,11 @@ export default function FileExplorerPage({ user }) {
                 />
             </div>
 
-            <button onClick={() => setShowBatchModal(true)} disabled={source !== "Owned"}>
-                إحالة الملفات
-            </button>
-            <button onClick={handleCancelTransfers} disabled={source !== "Sent"}>
-                إلغاء الإحالات
-            </button>
-            <button onClick={handleAcceptTransfers} disabled={source !== "Received"}>
-                قبول
-            </button>
-            <button onClick={handleRejectTransfers} disabled={source !== "Received"}>
-                رفض
-            </button>
-            <button disabled={source !== "Sent"} onClick={() => setShowBatchModal("edit")}>
-                تعديل
-            </button>
+            <button onClick={() => setShowBatchModal(true)} disabled={source !== "Owned"}>إحالة الملفات</button>
+            <button onClick={handleCancelTransfers} disabled={source !== "Sent"}>إلغاء الإحالات</button>
+            <button onClick={handleAcceptTransfers} disabled={source !== "Received"}>قبول</button>
+            <button onClick={handleRejectTransfers} disabled={source !== "Received"}>رفض</button>
+            <button disabled={source !== "Sent"} onClick={() => setShowBatchModal("edit")}>تعديل</button>
 
             <table>
                 <thead>
@@ -323,15 +291,11 @@ export default function FileExplorerPage({ user }) {
                             <td>{f.number}</td>
                             <td>{f.sujet}</td>
                             <td>
-                            {f.source === "Sent"
-                                ? "مرسلة"
-                                : f.source === "Received"
-                                ? "محالة على الحساب"
-                                : f.source === "Owned"
-                                ? "ملفاتي"
-                                : f.source}
+                                {f.source === "Sent" ? "مرسلة"
+                                    : f.source === "Received" ? "محالة على الحساب"
+                                    : f.source === "Owned" ? "ملفاتي"
+                                    : f.source}
                             </td>
-
                             <td>{f.type}</td>
                             <td>{f.date ? new Date(f.date).toLocaleDateString("ar-MA") : "-"}</td>
                             <td>{f.fromOrTo ?? "-"}</td>

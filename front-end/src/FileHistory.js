@@ -3,6 +3,7 @@ import { useParams } from "react-router-dom";
 import "./styles/App.css";
 import "./styles/FileReceive.css";
 
+// Mapping of backend status codes to readable Arabic
 const statusMap = {
   Sent: "تم الإرسال",
   Accepted: "مقبول",
@@ -10,12 +11,13 @@ const statusMap = {
 };
 
 const FileHistory = ({ user }) => {
-  const { fileNumber: fileNumberParam } = useParams();   // ✅ read param
+  const { fileNumber: fileNumberParam } = useParams(); // read fileNumber from URL
   const [fileNumber, setFileNumber] = useState(fileNumberParam || "");
   const [transfers, setTransfers] = useState([]);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState(null);
 
+  // Fetch transfers for a given file number
   const fetchTransfers = useCallback(async () => {
     if (!fileNumber.trim()) {
       setMessage({ type: "info", text: "الرجاء إدخال رقم الملف." });
@@ -29,9 +31,7 @@ const FileHistory = ({ user }) => {
 
     try {
       const res = await fetch(
-        `http://localhost:5000/api/transfers/completedfiles?fileNumber=${encodeURIComponent(
-          fileNumber
-        )}`,
+        `http://localhost:5000/api/transfers/completedfiles?fileNumber=${encodeURIComponent(fileNumber)}`,
         { credentials: "include" }
       );
 
@@ -56,18 +56,20 @@ const FileHistory = ({ user }) => {
     }
   }, [fileNumber]);
 
+  // Trigger search on form submission
   const handleSubmit = (e) => {
     e.preventDefault();
     fetchTransfers();
   };
 
-  // ✅ Auto-fetch if fileNumber comes from the URL
+  // Auto-fetch if fileNumber comes from URL
   useEffect(() => {
     if (fileNumberParam) {
       fetchTransfers();
     }
   }, [fileNumberParam, fetchTransfers]);
 
+  // Format date string to YYYY-MM-DD or "-" if invalid
   const formatDate = (dateStr) => {
     if (!dateStr) return "-";
     const d = new Date(dateStr);
@@ -86,6 +88,7 @@ const FileHistory = ({ user }) => {
 
       {message && <div className={`message-box ${message.type}-message rtl`}>{message.text}</div>}
 
+      {/* Search Form */}
       <form onSubmit={handleSubmit}>
         <div className="form-group-flex">
           <label htmlFor="fileNumber" className="form-label">
@@ -112,6 +115,7 @@ const FileHistory = ({ user }) => {
         </div>
       </form>
 
+      {/* Loading Indicator */}
       {loading && (
         <div className="loading-indicator">
           <div className="spinner"></div>
@@ -119,6 +123,7 @@ const FileHistory = ({ user }) => {
         </div>
       )}
 
+      {/* Transfers Table */}
       {!loading && transfers.length > 0 && (
         <div className="table-container">
           <table className="dossiers-table rtl">
@@ -148,6 +153,7 @@ const FileHistory = ({ user }) => {
         </div>
       )}
 
+      {/* No results placeholder */}
       {!loading && transfers.length === 0 && !message && (
         <div className="no-dossiers">
           <p>يرجى إدخال رقم الملف والنقر على "بحث" لعرض النتائج.</p>

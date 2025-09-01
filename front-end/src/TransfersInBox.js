@@ -10,7 +10,6 @@ const TransfersInbox = () => {
     const [searchMokarrirJudge, setSearchMokarrirJudge] = useState("");
     const [confirmModal, setConfirmModal] = useState(null); // { transferId, actionType, dossierNumero }
 
-    // Fetch dossiers from backend
     const fetchDossiers = useCallback(async () => {
         setMessage(null);
         setLoading(true);

@@ -4,13 +4,15 @@ import "./styles/form.css";
 import "./styles/DeleteUser.css";
 
 function ManageUsers() {
+  // State for user data, search filters, and messages
   const [users, setUsers] = useState([]);
   const [searchCNE, setSearchCNE] = useState("");
   const [searchUsername, setSearchUsername] = useState("");
   const [filteredUsers, setFilteredUsers] = useState([]);
-  const [message, setMessage] = useState(null); // success or error
+  const [message, setMessage] = useState(null); // success or error messages
 
-  const [editingUser, setEditingUser] = useState(null); // currently editing user
+  // State for editing a user
+  const [editingUser, setEditingUser] = useState(null); 
   const [editUsername, setEditUsername] = useState("");
   const [editPassword, setEditPassword] = useState("");
   const [editConfirm, setEditConfirm] = useState("");
@@ -18,7 +20,7 @@ function ManageUsers() {
   const [passwordError, setPasswordError] = useState("");
   const [confirmError, setConfirmError] = useState("");
 
-  // Fetch users on mount
+  // Fetch all users on component mount (excluding admin users)
   useEffect(() => {
     const fetchUsers = async () => {
       try {
@@ -35,6 +37,7 @@ function ManageUsers() {
     fetchUsers();
   }, []);
 
+  // Filter users based on search inputs
   const handleSearch = () => {
     const results = users.filter(
       (user) =>
@@ -44,6 +47,7 @@ function ManageUsers() {
     setFilteredUsers(results);
   };
 
+  // Delete a user after confirmation
   const handleDelete = async (id) => {
     if (!window.confirm("⚠️ هل أنت متأكد أنك تريد حذف هذا الحساب ؟")) return;
 
@@ -55,6 +59,7 @@ function ManageUsers() {
       const data = await res.json();
       if (!res.ok) throw new Error(data?.message || "فشل في حذف المستخدم");
 
+      // Update local user lists after deletion
       const updatedUsers = users.filter(u => u.id !== id);
       setUsers(updatedUsers);
       setFilteredUsers(updatedUsers);
@@ -64,6 +69,7 @@ function ManageUsers() {
     }
   };
 
+  // Open modal to edit selected user
   const openEditModal = (user) => {
     setEditingUser(user);
     setEditUsername(user.username);
@@ -75,27 +81,29 @@ function ManageUsers() {
     setMessage(null);
   };
 
+  // Handle updating user data
   const handleUpdate = async (e) => {
     e.preventDefault();
-
     let hasError = false;
+
+    // Reset error messages
     setPasswordError("");
     setConfirmError("");
     setMessage(null);
 
+    // Password validation
     if (editPassword && editPassword.length < 8) {
       setPasswordError("كلمة المرور يجب أن تحتوي على الأقل 8 أحرف");
       hasError = true;
     }
-
     if (editPassword && editPassword !== editConfirm) {
       setConfirmError("كلمتا المرور غير متطابقتين");
       hasError = true;
     }
-
     if (hasError) return;
 
     try {
+      // Call API to update user
       const res = await fetch("http://localhost:5000/api/UpdateUser", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
@@ -110,14 +118,14 @@ function ManageUsers() {
       const data = await res.json();
       if (!res.ok) throw new Error(data?.message || "فشل في تحديث الحساب");
 
-      // update local user list
+      // Update local user lists
       const updatedUsers = users.map(u =>
         u.id === editingUser.id ? { ...u, username: editUsername, role: editRole } : u
       );
       setUsers(updatedUsers);
       setFilteredUsers(updatedUsers);
       setMessage({ type: "success", text: data.message || "✅ تم تحديث الحساب بنجاح !" });
-      setEditingUser(null);
+      setEditingUser(null); // close modal
     } catch (err) {
       setMessage({ type: "error", text: err.message });
     }
@@ -127,8 +135,10 @@ function ManageUsers() {
     <div className="delete-user-container">
       <h2 className="main-title">إدارة المستخدمين</h2>
 
+      {/* Display messages */}
       {message && <div className={`message-box ${message.type}-message rtl`}>{message.text}</div>}
 
+      {/* Search inputs */}
       <div className="search-bar">
         <div className="search-group">
           <label>بحث برقم CNE:</label>
@@ -141,6 +151,7 @@ function ManageUsers() {
         <button className="search-btn" onClick={handleSearch}>بحث🔎</button>
       </div>
 
+      {/* Users table */}
       {filteredUsers.length === 0 ? (
         <p>❌ لا يوجد أي حساب</p>
       ) : (
@@ -173,19 +184,19 @@ function ManageUsers() {
         </table>
       )}
 
-      {/* Edit modal */}
+      {/* Edit user modal */}
       {editingUser && (
         <div className="modal-overlay">
           <div className="modal-content" style={{
-                                                position: 'fixed',
-                                                top: '50%',
-                                                left: '50%',
-                                                transform: 'translate(-50%, -50%)', // centers horizontally and vertically
-                                                background: 'white',
-                                                padding: '20px',
-                                                borderRadius: '10px',
-                                                zIndex: 1000
-                                              }}>
+            position: 'fixed',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            background: 'white',
+            padding: '20px',
+            borderRadius: '10px',
+            zIndex: 1000
+          }}>
             <h3>تحديث حساب مستخدم</h3>
             <form onSubmit={handleUpdate}>
               <div className="form-group">
