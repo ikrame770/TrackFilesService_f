@@ -16,7 +16,7 @@ namespace WebApplication2
             builder.Services.AddControllers();
             builder.Services.AddDistributedMemoryCache();
             builder.Services.AddDataProtection();
-            // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
+
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
 
@@ -34,7 +34,7 @@ namespace WebApplication2
                         .WithOrigins("http://localhost:3000") // React dev server
                         .AllowAnyHeader()
                         .AllowAnyMethod()
-                        .AllowCredentials(); // must allow credentials
+                        .AllowCredentials(); // allow credentials
                 });
             });
 

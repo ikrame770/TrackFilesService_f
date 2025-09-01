@@ -11,12 +11,16 @@ namespace WebApplication2.Controllers
     {
         private readonly AppDbContext _context;
 
+        // ✅ Constructor: inject the database context
         public EntityController(AppDbContext context)
         {
             _context = context;
         }
 
+        // ----------------------------
         // GET: api/entity/owned
+        // Returns all entities owned by the logged-in user
+        // ----------------------------
         [HttpGet("owned")]
         public async Task<IActionResult> GetOwnedEntities()
         {
@@ -29,7 +33,7 @@ namespace WebApplication2.Controllers
 
             var entities = await _context.Entities
                 .Where(e => e.OwnerId == userId)
-                .OrderByDescending(e => e.CreatedAt) // sort by creation date
+                .OrderByDescending(e => e.CreatedAt)
                 .Select(e => new
                 {
                     e.EntityId,
@@ -47,7 +51,13 @@ namespace WebApplication2.Controllers
             return Ok(new { files = entities });
         }
 
+        // ----------------------------
         // GET: api/files/reunion
+        // Returns all files related to the logged-in user, including:
+        // - Owned files not sent
+        // - Files sent by user and pending
+        // - Files received and pending
+        // ----------------------------
         [HttpGet("reunion")]
         public async Task<IActionResult> GetAllUserFiles()
         {
@@ -60,12 +70,12 @@ namespace WebApplication2.Controllers
             if (string.IsNullOrEmpty(role))
                 return Unauthorized(new { message = "🚫 بيانات الدور غير موجود." });
 
-            // 🔹 Unified DTO
+            // Get owned files that have not been sent yet
             var owned = await _context.Entities
                 .Where(e => e.OwnerId == userId
                     && !_context.Transfers.Any(t =>
                         t.EntityId == e.EntityId &&
-                        t.Status == TransferStatus.Sent)) // only block if already Sent
+                        t.Status == TransferStatus.Sent))
                 .OrderByDescending(e => e.CreatedAt)
                 .Select(e => new FileDto
                 {
@@ -83,12 +93,11 @@ namespace WebApplication2.Controllers
                 })
                 .ToListAsync();
 
-
-
+            // Get files sent by the user and still pending
             var sent = await _context.Transfers
                 .Include(t => t.Entity)
                 .Include(t => t.To)
-                .Where(t => t.FromUserId == userId && t.Status == TransferStatus.Sent) // only pending
+                .Where(t => t.FromUserId == userId && t.Status == TransferStatus.Sent)
                 .Select(t => new FileDto
                 {
                     Id = t.TransferId,
@@ -107,15 +116,13 @@ namespace WebApplication2.Controllers
                 })
                 .ToListAsync();
 
-
-
+            // Get files received by the user that are pending
             var received = await _context.Transfers
                 .Include(t => t.Entity)
                 .Include(t => t.From)
                 .Where(t =>
                     (t.ToUserId == userId || t.ToRole.ToLower() == role.ToLower()) &&
-                    t.Status == TransferStatus.Sent   // <-- only pending
-                )
+                    t.Status == TransferStatus.Sent)
                 .Select(t => new FileDto
                 {
                     Id = t.TransferId,
@@ -132,6 +139,7 @@ namespace WebApplication2.Controllers
                 })
                 .ToListAsync();
 
+            // Combine all files and sort by date
             var allFiles = owned
                 .Concat(sent)
                 .Concat(received)
@@ -141,6 +149,10 @@ namespace WebApplication2.Controllers
             return Ok(allFiles);
         }
 
+        // ----------------------------
+        // GET: api/entity/my-entities
+        // Returns all entity numbers owned by the user and available for sending
+        // ----------------------------
         [HttpGet("my-entities")]
         public async Task<IActionResult> GetMyEntities()
         {
@@ -151,17 +163,14 @@ namespace WebApplication2.Controllers
             if (!int.TryParse(userIdString, out int userId))
                 return Unauthorized(new { message = "غير مسموح" });
 
-            // Get all entities owned by the user
             var ownedEntities = _context.Entities
                 .Where(e => e.OwnerId == userId);
 
-            // Get entities that have a transfer with status Sent
             var sentEntityNumbers = await _context.Transfers
                 .Where(t => t.FromUserId == userId && t.Status == TransferStatus.Sent)
                 .Select(t => t.Entity.EntityNumber)
                 .ToListAsync();
 
-            // Exclude sent entities
             var availableEntities = await ownedEntities
                 .Where(e => !sentEntityNumbers.Contains(e.EntityNumber))
                 .Select(e => e.EntityNumber)
@@ -170,8 +179,11 @@ namespace WebApplication2.Controllers
             return Ok(availableEntities);
         }
 
-
+        // ----------------------------
         // GET: api/entity/check?fileNumber=...
+        // Checks if the current user can transfer a specific file
+        // Returns true if owned and not already sent
+        // ----------------------------
         [HttpGet("check")]
         public async Task<IActionResult> CheckOwnership([FromQuery] string fileNumber)
         {
@@ -182,10 +194,8 @@ namespace WebApplication2.Controllers
             if (!int.TryParse(userIdString, out int userId))
                 return Unauthorized(new { message = "غير مسموح" });
 
+            int currentUserId = userId;
 
-            int currentUserId = userId; // get the current logged-in user ID
-
-            // Query: entity exists, is owned by user, and has no Sent transfer
             var result = await _context.Entities
                 .Where(e => e.EntityNumber == fileNumber && e.OwnerId == currentUserId)
                 .Select(e => new 
@@ -205,20 +215,23 @@ namespace WebApplication2.Controllers
                 ? new { canTransfer = true, reason = "ok" } 
                 : new { canTransfer = false, reason = "already-sent" });
         }
-                
     }
+
+    // ----------------------------
+    // File DTO: Used to unify entity/transfer data for API responses
+    // ----------------------------
     public class FileDto
-        {
-            public int Id { get; set; }
-            public string Number { get; set; } = "";
-            public string Sujet { get; set; } = "";
-            public string Part1 { get; set; } = "";
-            public string Part2 { get; set; } = "";
-            public string Status { get; set; } = "";
-            public string Magistrale { get; set; } = "";
-            public string Type { get; set; } = "";
-            public DateTime Date { get; set; }
-            public string? FromOrTo { get; set; }
-            public string Source { get; set; } = "";
-     }
+    {
+        public int Id { get; set; }
+        public string Number { get; set; } = "";
+        public string Sujet { get; set; } = "";
+        public string Part1 { get; set; } = "";
+        public string Part2 { get; set; } = "";
+        public string Status { get; set; } = "";
+        public string Magistrale { get; set; } = "";
+        public string Type { get; set; } = "";
+        public DateTime Date { get; set; }
+        public string? FromOrTo { get; set; }
+        public string Source { get; set; } = "";
+    }
 }

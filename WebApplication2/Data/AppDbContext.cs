@@ -18,12 +18,14 @@ namespace WebApplication2.Data
         {
             base.OnModelCreating(modelBuilder);
 
+            // Configure Entity-User relationship: an Entity has one Owner (User), deletion of User does not cascade
             modelBuilder.Entity<Entity>()
                 .HasOne(e => e.Owner)
                 .WithMany()
                 .HasForeignKey(e => e.OwnerId)
                 .OnDelete(DeleteBehavior.NoAction); // or Restrict
 
+            // Configure date-only columns
             modelBuilder.Entity<Entity>()
                 .Property(e => e.CreatedAt)
                 .HasColumnType("date");
@@ -35,8 +37,8 @@ namespace WebApplication2.Data
             modelBuilder.Entity<Transfer>()
                 .Property(t => t.DateAccepted)
                 .HasColumnType("date");
-
         }
+
 
     }
 
