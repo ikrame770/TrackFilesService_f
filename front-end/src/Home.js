@@ -25,7 +25,7 @@ function Home({ user, onLogout }) {
       ? [
           { id: "create-user", label: "إنشاء حساب" },
           { id: "manage-user", label: "حذف / تغيير معلومات خاصة بالحساب"  },
-          { id: "recherche", label: "بحث عن ملف و رؤية كافة العمليات" },
+          { id: "file-history", label: "بحث عن ملف و رؤية كافة العمليات" },
         ]
       : [
           {
